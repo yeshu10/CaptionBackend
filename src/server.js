@@ -18,14 +18,33 @@ app.use(helmet({
 }));
 
 // Cross-Origin Resource Sharing
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const rawClientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigins = rawClientUrl
+  .split(',')
+  .map((url) => url.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, postman) or any localhost
-    if (!origin || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || origin === clientUrl) {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow localhost and local IPs
+    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('CORS policy violation'));
+
+    // Allow explicitly configured CLIENT_URL(s)
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Allow all Vercel deployments for this project (*.vercel.app)
+    if (/^https:\/\/captiongenerator[\w-]*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS policy violation for origin: ${origin}`));
   },
   credentials: true
 }));
