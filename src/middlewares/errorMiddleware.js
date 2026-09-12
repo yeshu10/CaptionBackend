@@ -32,6 +32,12 @@ const errorHandler = (err, req, res, next) => {
       .join(', ');
   }
 
+  // Mongoose CastError (e.g. invalid ObjectId format)
+  if (err.name === 'CastError') {
+    statusCode = 400;
+    message = `Invalid format for parameter: ${err.path || 'id'}. Expected a valid ObjectId.`;
+  }
+
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     statusCode = 401;

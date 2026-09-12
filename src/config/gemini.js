@@ -10,7 +10,7 @@ const getApiKey = () => {
 };
 
 const getModelName = () => {
-  return process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  return process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 };
 
 module.exports = {

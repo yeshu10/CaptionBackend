@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const captionService = require('../services/captionService');
 const { generateCaptionWithGemini } = require('../services/geminiService');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
@@ -142,7 +143,12 @@ const getUserCaptions = async (req, res, next) => {
  */
 const getCaptionById = async (req, res, next) => {
   try {
-    const caption = await captionService.getCaptionById(req.params.id, req.user._id);
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, 'Invalid caption ID format', 400);
+    }
+
+    const caption = await captionService.getCaptionById(id, req.user._id);
     if (!caption) {
       return errorResponse(res, 'Caption not found or unauthorized', 404);
     }
@@ -160,6 +166,11 @@ const getCaptionById = async (req, res, next) => {
  */
 const updateCaption = async (req, res, next) => {
   try {
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, 'Invalid caption ID format', 400);
+    }
+
     const { caption, hook, cta, keywords, hashtags, contentType, mood, length } = req.body;
 
     const updateFields = {};
@@ -172,7 +183,7 @@ const updateCaption = async (req, res, next) => {
     if (mood !== undefined) updateFields.mood = mood;
     if (length !== undefined) updateFields.length = length;
 
-    const updated = await captionService.updateCaption(req.params.id, req.user._id, updateFields);
+    const updated = await captionService.updateCaption(id, req.user._id, updateFields);
     if (!updated) {
       return errorResponse(res, 'Caption not found or unauthorized', 404);
     }
@@ -190,12 +201,17 @@ const updateCaption = async (req, res, next) => {
  */
 const deleteCaption = async (req, res, next) => {
   try {
-    const deleted = await captionService.deleteCaption(req.params.id, req.user._id);
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, 'Invalid caption ID format', 400);
+    }
+
+    const deleted = await captionService.deleteCaption(id, req.user._id);
     if (!deleted) {
       return errorResponse(res, 'Caption not found or unauthorized', 404);
     }
 
-    return successResponse(res, { id: req.params.id }, 'Caption deleted successfully');
+    return successResponse(res, { id }, 'Caption deleted successfully');
   } catch (error) {
     next(error);
   }
